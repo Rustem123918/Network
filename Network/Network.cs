@@ -11,6 +11,7 @@ namespace Network
         private Computer[] computers;
         private Switch[] switches;
         private Server[] servers;
+        private string[] serversNames = { "tiktok", "snapchat", "faceapp" };
         private const int countComputers = 20;
         private const int countSwitches = 10;
         private const int countServers = 3;
@@ -188,12 +189,11 @@ namespace Network
 
             //Каждому устройству в сети присваиваю Id из массива arrId
             for (int i = 0; i < countComputers; i++)
-                computers[i] = new Computer(arrId[i]);
+                computers[i] = new Computer(arrId[i], serversNames);
             for (int i = 0; i < countSwitches; i++)
-                switches[i] = new Switch(arrId[i + countComputers]);
-            servers[0] = new Server(arrId[countComputers + countSwitches], "tiktok");
-            servers[1] = new Server(arrId[countComputers + countSwitches + 1], "snapchat");
-            servers[2] = new Server(arrId[countComputers + countSwitches + 2], "faceapp");
+                switches[i] = new Switch(arrId[i + countComputers], serversNames);
+            for (int i = 0; i < countServers; i++)
+                servers[i] = new Server(arrId[i + countComputers + countSwitches], serversNames[i]);
         }
 
         private void GenerateConnections()

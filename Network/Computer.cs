@@ -10,12 +10,11 @@ namespace Network
     {
         public Dictionary<string, bool> connectedServers;
 
-        public Computer(int _id) : base(_id)
+        public Computer(int _id, string[] serversNames) : base(_id)
         {
             connectedServers = new Dictionary<string, bool>();
-            connectedServers.Add("tiktok", false);
-            connectedServers.Add("snapchat", false);
-            connectedServers.Add("faceapp", false);
+            foreach (var name in serversNames)
+                connectedServers.Add(name, false);
         }
 
         public override List<Answer> Action(Query query) //Send query

@@ -10,12 +10,11 @@ namespace Network
     {
         public Dictionary<string, int> serversAnswers;
 
-        public Switch(int _id) : base(_id)
+        public Switch(int _id, string[] serversNames) : base(_id)
         {
             serversAnswers = new Dictionary<string, int>();
-            serversAnswers.Add("tiktok", 0);
-            serversAnswers.Add("snapchat", 0);
-            serversAnswers.Add("faceapp", 0);
+            foreach (var name in serversNames)
+                serversAnswers.Add(name, 0);
         }
 
         public override List<Answer> Action(Query query) //Resend query
