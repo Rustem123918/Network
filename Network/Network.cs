@@ -11,12 +11,17 @@ namespace Network
         private Computer[] computers;
         private Switch[] switches;
         private Server[] servers;
+        private const int countComputers = 20;
+        private const int countSwitches = 10;
+        private const int countServers = 3;
+        private int seed = 2;
+
 
         public Network()
         {
-            computers = new Computer[20];
-            switches = new Switch[10];
-            servers = new Server[3];
+            computers = new Computer[countComputers];
+            switches = new Switch[countSwitches];
+            servers = new Server[countServers];
 
             GenerateRandomId();
             GenerateConnections();
@@ -154,13 +159,13 @@ namespace Network
         
         private void GenerateRandomId()
         {
-            int seed = 2;
-            int[] arrId = new int[33];
+            var countDevices = countComputers + countServers + countSwitches;
+            int[] arrId = new int[countDevices];
             Random rnd = new Random(seed);
             bool flag;
 
             //Заполняю массив arrId случайными уникальными числами от 10 до 99
-            for (int i = 0; i < 33;)
+            for (int i = 0; i < countDevices;)
             {
                 flag = false;
                 var nR = rnd.Next(10, 99);
@@ -182,13 +187,13 @@ namespace Network
             }
 
             //Каждому устройству в сети присваиваю Id из массива arrId
-            for (int i = 0; i < 20; i++)
+            for (int i = 0; i < countComputers; i++)
                 computers[i] = new Computer(arrId[i]);
-            for (int i = 0; i < 10; i++)
-                switches[i] = new Switch(arrId[i + 20]);
-            servers[0] = new Server(arrId[30], "tiktok");
-            servers[1] = new Server(arrId[31], "snapchat");
-            servers[2] = new Server(arrId[32], "faceapp");
+            for (int i = 0; i < countSwitches; i++)
+                switches[i] = new Switch(arrId[i + countComputers]);
+            servers[0] = new Server(arrId[countComputers + countSwitches], "tiktok");
+            servers[1] = new Server(arrId[countComputers + countSwitches + 1], "snapchat");
+            servers[2] = new Server(arrId[countComputers + countSwitches + 2], "faceapp");
         }
 
         private void GenerateConnections()
@@ -208,19 +213,19 @@ namespace Network
 
         private void ConnectComputers()
         {
-            for (int i = 0; i < computers.Length; i++)
+            for (int i = 0; i < countComputers; i++)
             {
-                int seed = i;
-                var rnd = new Random(seed);
+                int _seed = i;
+                var rnd = new Random(_seed);
                 bool flag = true;
                 int index = 0;
 
                 while (flag)
                 {
-                    index = rnd.Next(0, 10);
+                    index = rnd.Next(0, countSwitches);
                     if (!switches[index].connections.Contains(computers[i]) &&
                         switches[index].connections.Count < 4) flag = false;
-                    else rnd = new Random(++seed);
+                    else rnd = new Random(++_seed);
                 }
                 computers[i].connections.Add(switches[index]);
                 switches[index].connections.Add(computers[i]);
@@ -229,27 +234,27 @@ namespace Network
 
         private void ConnectSwitches()
         {
-            for (int i = 0; i < switches.Length; i++)
+            for (int i = 0; i < countSwitches; i++)
             {
                 bool check = false;
                 foreach (var e in switches)
                     if (switches[i].connections.Contains(e)) check = true;
                 if (check) continue;
 
-                int seed = i;
-                var rnd = new Random(seed);
+                int _seed = i;
+                var rnd = new Random(_seed);
                 bool flag = true;
                 int index = 0;
 
                 while (flag)
                 {
-                    index = rnd.Next(0, 10);
+                    index = rnd.Next(0, countSwitches);
                     if (index != i &&
                         !switches[i].connections.Contains(switches[index]) &&
                         switches[i].connections.Count < 4 &&
                         switches[index].connections.Count < 4)
                         flag = false;
-                    else rnd = new Random(++seed);
+                    else rnd = new Random(++_seed);
                 }
                 switches[i].connections.Add(switches[index]);
                 switches[index].connections.Add(switches[i]);
@@ -258,20 +263,20 @@ namespace Network
 
         private void ConnectServers()
         {
-            for (int i = 0; i < servers.Length; i++)
+            for (int i = 0; i < countServers; i++)
             {
-                int seed = i;
-                var rnd = new Random(seed);
+                int _seed = i;
+                var rnd = new Random(_seed);
                 bool flag = true;
                 int first = 0;
                 int second = 0;
 
                 while (flag)
                 {
-                    first = rnd.Next(0, 10);
-                    second = rnd.Next(0, 10);
+                    first = rnd.Next(0, countSwitches);
+                    second = rnd.Next(0, countSwitches);
                     if (first != second) flag = false;
-                    else rnd = new Random(++seed);
+                    else rnd = new Random(++_seed);
                 }
                 servers[i].connections.Add(switches[first]);
                 switches[first].connections.Add(servers[i]);
