@@ -10,10 +10,8 @@ namespace Network
     {
         public Dictionary<string, bool> connectedServers;
 
-        public Computer(int _id)
+        public Computer(int _id) : base(_id)
         {
-            connections = new List<Device>();
-            id = _id;
             connectedServers = new Dictionary<string, bool>();
             connectedServers.Add("tiktok", false);
             connectedServers.Add("snapchat", false);
@@ -22,23 +20,9 @@ namespace Network
 
         public override List<Answer> Action(Query query) //Send query
         {
-            query.devicesId.Add(id);
-            var list = new List<Answer>();
+            var list = ResendQuery(query);
 
-            foreach (var device in connections)
-            {
-                if (query.devicesId.Contains(device.id)) continue;
-
-                var queryClone = new Query(query);
-                var answers = device.Action(queryClone);
-                if (answers != null)
-                {
-                    foreach (var e in answers)
-                        list.Add(e);
-                }
-            }
-            
-            if (list.Count > 0)
+            if (list != null && list.Count > 0)
             {
                 foreach (var e in list)
                     connectedServers[e.serverName] = true;

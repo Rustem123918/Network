@@ -14,9 +14,8 @@ namespace Network
         {
             devicesId = new List<int>();
         }
-        public Query(Query query)
+        public Query(Query query) : this()
         {
-            devicesId = new List<int>();
             foreach (var e in query.devicesId)
                 devicesId.Add(e);
         }

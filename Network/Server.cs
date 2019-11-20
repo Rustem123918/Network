@@ -10,10 +10,8 @@ namespace Network
     {
         public string name;
 
-        public Server(int _id, string _name)
+        public Server(int _id, string _name) : base(_id)
         {
-            connections = new List<Device>();
-            id = _id;
             name = _name;
         }
 
@@ -25,7 +23,6 @@ namespace Network
             var list = new List<Answer>();
             list.Add(answer);
             
-
             return list;
         }
     }
