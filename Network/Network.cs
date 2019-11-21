@@ -14,7 +14,6 @@ namespace Network
         private string[] serversNames = { "tiktok", "snapchat", "faceapp" };
         private const int countComputers = 20;
         private const int countSwitches = 10;
-        private const int countServers = 3;
         private int seed = 2;
 
 
@@ -22,7 +21,7 @@ namespace Network
         {
             computers = new Computer[countComputers];
             switches = new Switch[countSwitches];
-            servers = new Server[countServers];
+            servers = new Server[serversNames.Length];
 
             GenerateRandomId();
             GenerateConnections();
@@ -160,7 +159,7 @@ namespace Network
         
         private void GenerateRandomId()
         {
-            var countDevices = countComputers + countServers + countSwitches;
+            var countDevices = countComputers + serversNames.Length + countSwitches;
             int[] arrId = new int[countDevices];
             Random rnd = new Random(seed);
             bool flag;
@@ -192,7 +191,7 @@ namespace Network
                 computers[i] = new Computer(arrId[i], serversNames);
             for (int i = 0; i < countSwitches; i++)
                 switches[i] = new Switch(arrId[i + countComputers], serversNames);
-            for (int i = 0; i < countServers; i++)
+            for (int i = 0; i < serversNames.Length; i++)
                 servers[i] = new Server(arrId[i + countComputers + countSwitches], serversNames[i]);
         }
 
@@ -263,7 +262,7 @@ namespace Network
 
         private void ConnectServers()
         {
-            for (int i = 0; i < countServers; i++)
+            for (int i = 0; i < serversNames.Length; i++)
             {
                 int _seed = i;
                 var rnd = new Random(_seed);
