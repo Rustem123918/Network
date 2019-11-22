@@ -11,10 +11,16 @@ namespace Network
         private Computer[] computers;
         private Switch[] switches;
         private Server[] servers;
+
         private string[] serversNames = { "tiktok", "snapchat", "faceapp" };
         private const int countComputers = 20;
         private const int countSwitches = 10;
+
+        private int maxConnectionsInSwitch = 4;
+        private int maxConnectionsInServer = 2;
+
         private int seed = 2;
+        private Random rnd;
 
 
         public Network()
@@ -23,8 +29,9 @@ namespace Network
             switches = new Switch[countSwitches];
             servers = new Server[serversNames.Length];
 
-            GenerateRandomId();
-            GenerateConnections();
+            rnd = new Random(seed);
+            GenerateRandomId(rnd);
+            GenerateConnections(rnd);
 
             //Initiate
             #region
@@ -157,34 +164,10 @@ namespace Network
             #endregion
         }
         
-        private void GenerateRandomId()
+        private void GenerateRandomId(Random rnd)
         {
             var countDevices = countComputers + serversNames.Length + countSwitches;
-            int[] arrId = new int[countDevices];
-            Random rnd = new Random(seed);
-            bool flag;
-
-            //Заполняю массив arrId случайными уникальными числами от 10 до 99
-            for (int i = 0; i < countDevices;)
-            {
-                flag = false;
-                var nR = rnd.Next(10, 99);
-
-                for (int j = 0; j < i; j++)
-                {
-                    if (arrId[j] == nR)
-                    {
-                        flag = true;
-                        break;
-                    }
-                }
-
-                if (!flag)
-                {
-                    arrId[i] = nR;
-                    i++;
-                }
-            }
+            int[] arrId = GenerateRandomArray(rnd, 10, 99, countDevices);
 
             //Каждому устройству в сети присваиваю Id из массива arrId
             for (int i = 0; i < countComputers; i++)
@@ -195,94 +178,146 @@ namespace Network
                 servers[i] = new Server(arrId[i + countComputers + countSwitches], serversNames[i]);
         }
 
-        private void GenerateConnections()
+        private void GenerateConnections(Random rnd)
         {
             //1)
             //Подключаем сервера к свичам
-            ConnectServers();
+            var array1 = GenerateRandomArray(rnd, 0, countSwitches, countSwitches);
+            ConnectServers(array1);
 
             //2)
             //Подключаем свичи к свичам
-            ConnectSwitches();
+            var array2 = GenerateRandomArray(rnd, 0, countSwitches, countSwitches);
+            ConnectSwitches(array2);
 
             //3)
             //Подключаем компьютеры к свичам
-            ConnectComputers();
+            var array3 = GenerateRandomArray(rnd, 0, countSwitches, countSwitches);
+            ConnectComputers(array3);
         }
 
-        private void ConnectComputers()
+        private void ConnectComputers(int[] arraySwitches)
         {
-            for (int i = 0; i < countComputers; i++)
+            foreach(var computer in computers)
             {
-                int _seed = i;
-                var rnd = new Random(_seed);
-                bool flag = true;
-                int index = 0;
+                bool allRight = false;
 
-                while (flag)
+                foreach(var index in arraySwitches)
                 {
-                    index = rnd.Next(0, countSwitches);
-                    if (!switches[index].connections.Contains(computers[i]) &&
-                        switches[index].connections.Count < 4) flag = false;
-                    else rnd = new Random(++_seed);
+                    if(switches[index].connections.Count < maxConnectionsInSwitch)
+                    {
+                        ConnectTwoDevices(computer, switches[index]);
+                        allRight = true;
+                        break;
+                    }
                 }
-                computers[i].connections.Add(switches[index]);
-                switches[index].connections.Add(computers[i]);
+
+                if (!allRight) throw new Exception("We need more switches or more ports in every switch");
             }
         }
 
-        private void ConnectSwitches()
+        private void ConnectSwitches(int[] arraySwitches)
         {
-            for (int i = 0; i < countSwitches; i++)
+            bool allRight = false;
+
+            //Соединяю свичи по парам
+            for (int i = 0; i < countSwitches - 1; i++)
+                ConnectTwoDevices(switches[arraySwitches[i]], switches[arraySwitches[++i]]);
+
+            //Если количество свичей четное, то сработает if и все будет окей,
+            //если нечентое, то сработает else и последний свич присоединится к свичу, удовлетворяющему условиям
+            if (switches[arraySwitches[countSwitches - 1]].connections.Contains(switches[arraySwitches[countSwitches - 2]]))
             {
-                bool check = false;
-                foreach (var e in switches)
-                    if (switches[i].connections.Contains(e)) check = true;
-                if (check) continue;
-
-                int _seed = i;
-                var rnd = new Random(_seed);
-                bool flag = true;
-                int index = 0;
-
-                while (flag)
-                {
-                    index = rnd.Next(0, countSwitches);
-                    if (index != i &&
-                        !switches[i].connections.Contains(switches[index]) &&
-                        switches[i].connections.Count < 4 &&
-                        switches[index].connections.Count < 4)
-                        flag = false;
-                    else rnd = new Random(++_seed);
-                }
-                switches[i].connections.Add(switches[index]);
-                switches[index].connections.Add(switches[i]);
+                allRight = true;
             }
+            else
+            {
+                foreach (var index in arraySwitches)
+                {
+                    if (index != arraySwitches[countSwitches - 1] && 
+                        switches[index].connections.Count < maxConnectionsInSwitch)
+                    {
+                        ConnectTwoDevices(switches[index], switches[arraySwitches[countSwitches - 1]]);
+                        allRight = true;
+                        break;
+                    }
+                }
+            }
+
+            if(!allRight) throw new Exception("We need more switches or more ports in every switch");
         }
 
-        private void ConnectServers()
+        private void ConnectServers(int[] arraySwitches)
         {
-            for (int i = 0; i < serversNames.Length; i++)
+            int index = 0;
+            foreach (var server in servers)
             {
-                int _seed = i;
-                var rnd = new Random(_seed);
-                bool flag = true;
-                int first = 0;
-                int second = 0;
-
-                while (flag)
+                for (int i = 0; i < maxConnectionsInServer; i++)
                 {
-                    first = rnd.Next(0, countSwitches);
-                    second = rnd.Next(0, countSwitches);
-                    if (first != second) flag = false;
-                    else rnd = new Random(++_seed);
+                    if (switches[arraySwitches[index]].connections.Count == maxConnectionsInSwitch - 1)
+                        throw new Exception("We need more switches or more ports in every switch");
+                    ConnectTwoDevices(server, switches[arraySwitches[index]]);
+                    index++;
+                    if (index == countSwitches) index = 0;
                 }
-                servers[i].connections.Add(switches[first]);
-                switches[first].connections.Add(servers[i]);
-
-                servers[i].connections.Add(switches[second]);
-                switches[second].connections.Add(servers[i]);
             }
+
+            //for (int i = 0; i < serversNames.Length; i++)
+            //{
+            //    bool flag = true;
+            //    int first = 0;
+            //    int second = 0;
+            //    int counter = 0;
+
+            //    while (flag)
+            //    {
+            //        counter++;
+            //        first = rnd.Next(0, countSwitches);
+            //        second = rnd.Next(0, countSwitches);
+            //        if (first != second && 
+            //            switches[first].connections.Count<4 &&
+            //            switches[second].connections.Count<4) flag = false;
+            //        if (counter > 1000000) throw new Exception("We need more switches or more ports in every switch");
+            //    }
+            //    ConnectTwoDevices(servers[i], switches[first]);
+            //    ConnectTwoDevices(servers[i], switches[second]);
+            //}
+        }
+
+        private void ConnectTwoDevices(Device dev1, Device dev2)
+        {
+            dev1.connections.Add(dev2);
+            dev2.connections.Add(dev1);
+        }
+
+        private int[] GenerateRandomArray(Random rnd, int minValue, int maxValue, int arrayLength)
+        {
+            int[] array = new int[arrayLength];
+            bool flag;
+
+            //Заполняю массив array случайными уникальными числами от minValue до maxValue
+            for (int i = 0; i < arrayLength;)
+            {
+                flag = false;
+                var nR = rnd.Next(minValue, maxValue);
+
+                for (int j = 0; j < i; j++)
+                {
+                    if (array[j] == nR)
+                    {
+                        flag = true;
+                        break;
+                    }
+                }
+
+                if (!flag)
+                {
+                    array[i] = nR;
+                    i++;
+                }
+            }
+
+            return array;
         }
     }
 }
